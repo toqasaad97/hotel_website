@@ -1,16 +1,15 @@
-import SearchForm from "./components/SearchForm"
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import SearchForm from './SearchForm';
 
-import  { CardResult } from "./components/Card"
+const queryClient = new QueryClient();
 
 function App() {
-
   return (
-    <>
-    <SearchForm/>
-    <CardResult/>
-
-    </>
-  )
+    <QueryClientProvider client={queryClient}>
+      <SearchForm />
+    </QueryClientProvider>
+  );
 }
 
-export default App
+export default App;
