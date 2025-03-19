@@ -1,150 +1,268 @@
-import React, { useState } from "react";
-import DatePicker from "react-datepicker";
+import React, { useState, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { Building, Calendar, User, Baby, Bed } from "lucide-react"; // Lucide icons
+import useSearchCities from '../hooks/useSearchCities';
+import { Building, Calendar, User, Baby, Bed, Search, AlertTriangle } from 'lucide-react';
+import Loader from './Loader';
+import { toast } from 'react-hot-toast';
 
-const SearchForm = () => {
-  const [destination, setDestination] = useState("");
+function SearchForm({ onSearch, isLoading }) {
+
+  const [destination, setDestination] = useState('');
+  const [debouncedDestination, setDebouncedDestination] = useState('');
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
-  const [roomType, setRoomType] = useState("single"); // State for room type
+  const [roomType, setRoomType] = useState('single');
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [error, setError] = useState(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [rooms, setRooms] = useState(1);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (destination.length >= 2) {
+        setDebouncedDestination(destination);
+        console.log("Setting debounced destination:", destination);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [destination]);
+
+  const { data: cities, isLoading: isSearchingCities, isError } = useSearchCities(debouncedDestination);
+
+  function handleCitySelect(city) {
+    console.log("Selected city:", city);
+    setSelectedCity(city);
+    setDestination(`${city.name}, ${city.country}`);
+    setShowSuggestions(false);
+    setError(null);
+  }
+
+
+  function handleSubmit(e) {
     e.preventDefault();
-    console.log("Form submitted:", {
-      destination,
-      checkIn,
-      checkOut,
+
+
+    if (!selectedCity) {
+      setError('Please select a valid city.');
+      return;
+    }
+
+    if (!checkIn || !checkOut) {
+      setError('Please select both check-in and check-out dates.');
+      return;
+    }
+
+    if (checkIn >= checkOut) {
+      setError('Check-out date must be after check-in date.');
+      return;
+    }
+
+
+    const searchParams = {
+      cityId: selectedCity.id,
+      checkIn: checkIn.toISOString().split('T')[0],
+      checkOut: checkOut.toISOString().split('T')[0],
       adults,
       children,
-      roomType,
-    });
-  };
+      rooms,
+      roomType
+    };
+
+    console.log("Search params:", searchParams);
+
+    try {
+      onSearch(searchParams);
+    } catch (error) {
+      console.error('Error initiating hotel search:', error);
+      setError('Failed to start hotel search. Please try again later.');
+      toast.error('Failed to start hotel search', { id: 'hotel-search' });
+    }
+  }
+
+  const minCheckoutDate = checkIn ? new Date(checkIn.getTime() + 86400000) : null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-purple-50 p-4">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-2xl space-y-6 w-full max-w-4xl mx-auto border border-gray-200">
-        {/* Title */}
-        <h1 className="text-4xl font-bold text-center text-gray-800 mb-8">
-          Find Your Perfect Stay
-        </h1>
+    <div className="bg-white p-6 shadow-lg rounded-lg max-w-4xl mx-auto -mt-16 relative z-10">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+          Find Your Perfect Hotel
+        </h2>
 
-        {/* Destination */}
-        <div>
-          <label className="block text-lg font-semibold text-gray-700 mb-2 flex items-center">
-            <Building className="mr-2 text-blue-500" /> Destination
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              placeholder="Enter a city"
-              className="w-full pl-12 p-4 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm hover:border-blue-400 transition-all"
-            />
-            <Building className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        {error && (
+          <div className="text-red-500 text-sm text-center mb-4 flex items-center justify-center">
+            <AlertTriangle size={16} className="mr-2" />
+            {error}
           </div>
-        </div>
+        )}
 
-        {/* Check-in and Check-out */}
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <label className="block text-lg font-semibold text-gray-700 mb-2 flex items-center">
-              <Calendar className="mr-2 text-purple-500" /> Check-in
-            </label>
-            <div className="relative">
-              <DatePicker
-                selected={checkIn}
-                onChange={(date) => setCheckIn(date)}
-                dateFormat="yyyy-MM-dd"
-                className="w-full pl-12 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm hover:border-blue-400 transition-all"
-                placeholderText="Select date"
-              />
-              <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-lg font-semibold text-gray-700 mb-2 flex items-center">
-              <Calendar className="mr-2 text-purple-500" /> Check-out
-            </label>
-            <div className="relative">
-              <DatePicker
-                selected={checkOut}
-                onChange={(date) => setCheckOut(date)}
-                dateFormat="yyyy-MM-dd"
-                className="w-full pl-12 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm hover:border-blue-400 transition-all"
-                placeholderText="Select date"
-              />
-              <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-          </div>
-        </div>
 
-        {/* Adults, Children */}
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <label className="block text-lg font-semibold text-gray-700 mb-2 flex items-center">
-              <User className="mr-2 text-green-500" /> Adults
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Building className="inline mr-1" size={16} /> Destination
             </label>
             <div className="relative">
               <input
-                type="number"
-                min="1"
-                value={adults}
-                onChange={(e) => setAdults(parseInt(e.target.value) || 1)}
-                className="w-full pl-12 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm hover:border-blue-400 transition-all"
+                type="text"
+                value={destination}
+                onChange={(e) => {
+                  setDestination(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onBlur={() => {
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                placeholder="Enter a city"
+                className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
-              <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              {showSuggestions && destination.length >= 2 && (
+                <div className="mt-1 bg-white border border-gray-200 rounded-lg shadow-md max-h-48 overflow-y-auto absolute w-full z-10">
+                  {isSearchingCities && (
+                    <div className="p-3">
+                      <Loader size={30} type="beat" />
+                    </div>
+                  )}
+                  {isError && <p className="text-red-500 p-3 text-sm">Error fetching cities</p>}
+                  {cities && cities.length > 0 ? (
+                    <ul>
+                      {cities.map((city) => (
+                        <li
+                          key={city.id}
+                          onClick={() => handleCitySelect(city)}
+                          className="p-3 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0"
+                        >
+                          {city.name}, {city.country}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-500 p-3 text-sm">No cities found</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-          <div>
-            <label className="block text-lg font-semibold text-gray-700 mb-2 flex items-center">
-              <Baby className="mr-2 text-yellow-500" /> Children
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                min="0"
-                value={children}
-                onChange={(e) => setChildren(parseInt(e.target.value) || 0)}
-                className="w-full pl-12 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm hover:border-blue-400 transition-all"
-              />
-              <Baby className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-          </div>
-        </div>
 
-        {/* Room Type Selector */}
-        <div>
-          <label className="block text-lg font-semibold text-gray-700 mb-2 flex items-center">
-            <Bed className="mr-2 text-red-500" /> Room Type
-          </label>
-          <div className="relative">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Bed className="inline mr-1" size={16} /> Room Type
+            </label>
             <select
               value={roomType}
               onChange={(e) => setRoomType(e.target.value)}
-              className="w-full pl-12 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm hover:border-blue-400 transition-all appearance-none"
+              className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none appearance-none bg-white"
             >
               <option value="single">Single Room</option>
               <option value="double">Double Room</option>
+              <option value="twin">Twin Room</option>
+              <option value="family">Family Room</option>
               <option value="suite">Suite</option>
             </select>
-            <Bed className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
         </div>
 
-        {/* Submit Button */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Calendar className="inline mr-1" size={16} /> Check-in
+            </label>
+            <DatePicker
+              selected={checkIn}
+              onChange={(date) => setCheckIn(date)}
+              selectsStart
+              startDate={checkIn}
+              endDate={checkOut}
+              minDate={new Date()}
+              dateFormat="yyyy-MM-dd"
+              className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholderText="Select date"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Calendar className="inline mr-1" size={16} /> Check-out
+            </label>
+            <DatePicker
+              selected={checkOut}
+              onChange={(date) => setCheckOut(date)}
+              selectsEnd
+              startDate={checkIn}
+              endDate={checkOut}
+              minDate={minCheckoutDate || new Date()}
+              dateFormat="yyyy-MM-dd"
+              className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholderText="Select date"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-6">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <User className="inline mr-1" size={16} /> Adults
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="10"
+              value={adults}
+              onChange={(e) => setAdults(parseInt(e.target.value) || 1)}
+              className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <Baby className="inline mr-1" size={16} /> Children
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="10"
+              value={children}
+              onChange={(e) => setChildren(parseInt(e.target.value) || 0)}
+              className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <User className="inline mr-1" size={16} /> Rooms
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={rooms}
+              onChange={(e) => setRooms(parseInt(e.target.value) || 1)}
+              className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 hover:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-md"
+          disabled={!selectedCity || !checkIn || !checkOut || isLoading}
+          className="w-full bg-blue-600 text-white p-3 rounded-lg font-medium text-base hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
-          Search
+          {isLoading ? (
+            <span className="flex items-center">
+              <Loader size={24} type="clip" />
+              <span className="ml-2">Searching...</span>
+            </span>
+          ) : (
+            <span className="flex items-center">
+              <Search size={18} className="mr-2" />
+              Search Hotels
+            </span>
+          )}
         </button>
       </form>
     </div>
   );
-};
+}
 
 export default SearchForm;
