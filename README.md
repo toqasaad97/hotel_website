@@ -2,6 +2,8 @@
 
 A modern React application for searching and booking hotels. This web application allows users to search for hotels by city, check availability, and view detailed information about each hotel.
 
+[Live Demo](https://hotel-website-ecru.vercel.app/)
+
 ## Features
 
 - Landing page with attractive hero image and key features
@@ -52,4 +54,4 @@ A modern React application for searching and booking hotels. This web applicatio
 
 This project uses the Makcorps API for hotel data. API calls are handled through custom hooks:
 - `useSearchCities` - For city search autocomplete
-- `useSearchHotels` - For fetching hotel information based on search criteria 
+- `useSearchHotels` - For fetching hotel information based on search criteria
