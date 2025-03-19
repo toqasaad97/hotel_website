@@ -3,7 +3,6 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { Building, Calendar, User, Baby, Bed, Search, AlertTriangle } from 'lucide-react';
 import Loader from './Loader';
-import { toast } from 'react-hot-toast';
 import useSearchCities from '../hooks/useSearchCities';
 
 function SearchForm({ onSearch, isLoading }) {
@@ -19,6 +18,23 @@ function SearchForm({ onSearch, isLoading }) {
   const [error, setError] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [rooms, setRooms] = useState(1);
+
+  // Set default dates when component mounts
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Default check-in to tomorrow
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Default check-out to 3 days after tomorrow
+    const checkoutDate = new Date(tomorrow);
+    checkoutDate.setDate(checkoutDate.getDate() + 2);
+
+    setCheckIn(tomorrow);
+    setCheckOut(checkoutDate);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -42,22 +58,34 @@ function SearchForm({ onSearch, isLoading }) {
 
   function handleSubmit(e) {
     e.preventDefault();
+    setError(null);
 
-    if (!cityId) {
-      setError('Please enter a valid city ID.');
+    if (!citySearch.trim()) {
+      setError('Please enter a city name or select a city from the dropdown');
       return;
     }
 
     if (!checkIn || !checkOut) {
-      setError('Please select both check-in and check-out dates.');
+      setError('Please select both check-in and check-out dates');
+      return;
+    }
+
+    // Validate check-in date is not in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (checkIn < today) {
+      setError('Check-in date cannot be in the past');
       return;
     }
 
     if (checkIn >= checkOut) {
-      setError('Check-out date must be after check-in date.');
+      setError('Check-out date must be after check-in date');
       return;
     }
 
+    // Only use provided cityId. Don't try to generate synthetic IDs.
+    // This ensures we only use real API data.
     const searchParams = {
       cityId: cityId,
       checkIn: checkIn.toISOString().split('T')[0],
@@ -68,21 +96,14 @@ function SearchForm({ onSearch, isLoading }) {
       roomType
     };
 
-    console.log("Search params:", searchParams);
-
-    try {
-      onSearch(searchParams);
-    } catch (error) {
-      console.error('Error initiating hotel search:', error);
-
-      if (error.message && error.message.includes('date has already passed')) {
-        setError('Please select future dates for your stay.');
-      } else {
-        setError('Failed to start hotel search. Please try again later.');
-      }
-
-      toast.error('Failed to start hotel search', { id: 'hotel-search' });
+    // If no city ID was selected from dropdown, show error
+    if (!cityId) {
+      setError('Please select a valid city from the dropdown');
+      return;
     }
+
+    console.log("Search params:", searchParams);
+    onSearch(searchParams);
   }
 
   const today = new Date();
@@ -255,7 +276,7 @@ function SearchForm({ onSearch, isLoading }) {
 
         <button
           type="submit"
-          disabled={!cityId || !checkIn || !checkOut || isLoading}
+          disabled={!citySearch || !checkIn || !checkOut || isLoading}
           className="w-full bg-blue-600 text-white p-3 rounded-lg font-medium text-base hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
           {isLoading ? (

@@ -15,7 +15,7 @@ const useSearchHotels = (searchParams) => {
 
         const results = await searchHotels(searchParams);
 
-        if (results.length === 0) {
+        if (!results || results.length === 0) {
           toast.error('No hotels found for this search criteria', { id: 'hotel-search' });
           return [];
         }
@@ -23,32 +23,37 @@ const useSearchHotels = (searchParams) => {
         toast.success(`Found ${results.length} hotels!`, { id: 'hotel-search' });
         return results;
       } catch (error) {
-        let errorMessage = 'Failed to search hotels';
+        console.error('Hotel search error:', error);
 
-        // Check if the error is from the API
-        if (error.message.includes('API request failed')) {
-          // Extract the error message from the API
-          const match = error.message.match(/API request failed with status \d+: (.+)/);
-          if (match && match[1]) {
-            try {
-              // Try to parse the error JSON
-              const jsonError = JSON.parse(match[1]);
-              errorMessage = jsonError.message || errorMessage;
-            } catch {
-              // If not JSON, use the raw message
-              errorMessage = match[1];
-            }
+        let errorMessage = 'Error searching for hotels';
+
+        // Extract the relevant part of the error message
+        if (error.message) {
+          if (error.message.includes('No hotels found')) {
+            errorMessage = error.message;
+          } else if (error.message.includes('date')) {
+            errorMessage = error.message;
+          } else if (error.message.includes('API returned HTML')) {
+            errorMessage = 'Server returned invalid data format. Please try another search.';
+          } else if (error.message.includes('Request timed out')) {
+            errorMessage = 'Search request timed out. Please try again.';
+          } else if (error.message.includes('API returned invalid data format')) {
+            errorMessage = 'Invalid data received from server. Please try a different search.';
+          } else if (error.message.includes('City ID is required')) {
+            errorMessage = 'Please select a valid city from the dropdown first';
+          } else {
+            // Use a simplified version of the error message
+            errorMessage = error.message.split(':')[0];
           }
         }
 
         toast.error(errorMessage, { id: 'hotel-search' });
-        console.error('Hotel search error:', error);
-        throw new Error(errorMessage);
+        return []; // Return empty array to avoid UI breakage
       }
     },
     enabled,
-    staleTime: 0, // Don't cache results to ensure fresh data on each search
-    retry: 1,
+    staleTime: 0,
+    retry: 0, // Don't retry API calls to avoid multiple error messages
     refetchOnWindowFocus: false,
   });
 };
