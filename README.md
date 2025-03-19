@@ -38,3 +38,17 @@ Create a `.env` file with your API key:
 ```
 VITE_API_KEY=your_api_key
 ```
+
+## CORS Handling
+
+This application includes three strategies for handling CORS issues:
+
+1. **Vite Proxy Server**: The development server proxies API requests to avoid CORS errors
+2. **Fallback Demo Data**: If API calls fail due to CORS, the app will display demo data instead
+3. **CORS Headers**: Proper headers are included with all API requests
+
+To toggle between using the proxy and direct API calls, set the `USE_PROXY` flag in `src/Services/api.js`.
+
+## License
+
+MIT

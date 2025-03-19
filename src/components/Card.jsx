@@ -33,12 +33,6 @@ const Card = ({ hotel }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      {/* Hotel Image */}
-      <div className="w-full h-48 overflow-hidden bg-blue-50">
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-100 to-blue-50">
-          <div className="text-3xl text-blue-500">🏨</div>
-        </div>
-      </div>
 
       {/* Hotel Details */}
       <div className="p-4">
