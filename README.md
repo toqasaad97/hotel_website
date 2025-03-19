@@ -1,6 +1,7 @@
 # Hotel Search Application
 
 This application allows users to search for hotels based on location, dates, and room requirements. It integrates with the Makcorps API to fetch hotel data.
+[Live Demo](https://hotel-website-ecru.vercel.app/)
 
 ## Features
 
