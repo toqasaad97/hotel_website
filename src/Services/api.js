@@ -1,4 +1,4 @@
-const API_KEY = '67daa64438cc22f7030316a7';
+const API_KEY = import.meta.env.VITE_API_KEY;
 const API_BASE_URL = 'https://api.makcorps.com';
 
 export const searchCities = async (city) => {
@@ -64,8 +64,8 @@ export const searchHotels = async (searchParams) => {
       hotelId: hotel.hotelId || hotel._id || `hotel-${Math.random().toString(36).substring(2, 10)}`,
       name: hotel.name || 'Unknown Hotel',
       telephone: hotel.telephone || '',
-      geocode: hotel.geocode ,
-      reviews: hotel.reviews?.rating ,
+      geocode: hotel.geocode,
+      reviews: hotel.reviews?.rating,
       price1: hotel.price1 || 0,
       vendor1: hotel.vendor1 || '',
     }));
