@@ -25,7 +25,7 @@ This application allows users to search for hotels based on location, dates, and
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/toqasaad97/hotel_website.git
 cd hotel-search-app
 ```
 
@@ -69,14 +69,6 @@ Before searching for hotels, the application must first find the correct City ID
 - `src/hooks/`: Custom React hooks for data fetching
 - `public/`: Static assets like images and icons
 
-## Deployment
-
-The application is deployed at: [Demo URL](your-demo-url)
-
-## Screenshots
-
-(Add screenshots of your application here)
-
 ## Future Improvements
 
 - Add more filtering options for hotel search results
@@ -84,7 +76,3 @@ The application is deployed at: [Demo URL](your-demo-url)
 - Add a map view for hotel locations
 - Add user authentication and saved searches
 - Implement booking functionality
-
-## License
-
-MIT
